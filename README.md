@@ -52,7 +52,7 @@ Use systemctl to run the code on boot.
 The fh_google.service file is intended for a Raspberry Pi.
 
 ```
-sudo cp fh_somfy.service /lib/systemd/system/
+sudo cp fh_google.service /lib/systemd/system/
 sudo chmod 644 /lib/systemd/system/fh_google.service
 sudo systemctl daemon-reload
 sudo systemctl enable fh_google.service
