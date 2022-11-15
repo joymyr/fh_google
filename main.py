@@ -64,7 +64,8 @@ def on_message(client, userdata, msg):
             siren_topic = f"{MQ_SIREN_COMMAND_TOPIC}/ad:g{device.device_id}_0"
             media_topic = f"{MQ_MEDIA_COMMAND_TOPIC}/ad:g{device.device_id}_1"
             if msg.topic == siren_topic:
-                response = requests.post(f"{CAST_URL}device/{device.device_id}/playMedia", json=[
+                response = requests.get(f"{CAST_URL}device/{device.device_id}/stop") if val == "off" \
+                    else requests.post(f"{CAST_URL}device/{device.device_id}/playMedia", json=[
                         {
                             "mediaTitle": val,
                             "googleTTS": "no-NO"
@@ -79,6 +80,7 @@ def on_message(client, userdata, msg):
 
 
 def google_to_fh_add_all() -> None:
+    google_to_fh_add_assistant()
     for device in devices:
         print(f"{device.device_name} ({device.device_id})")
         google_to_fh_add_speaker(device)
@@ -106,13 +108,16 @@ def google_to_fh_update_all() -> None:
         mqclient.publish(event_topic_media, payload=json.dumps({
             "serv": "media_player",
             "type": "evt.playback.report",
-            "val": "pause" if dev['status']['status'] == "" else "play",
+            "val": "play" if dev['status']['status'] == "PLAYING" else "pause",
             "val_t": "string"
         }))
         mqclient.publish(event_topic_media, payload=json.dumps({
             "serv": "media_player",
             "type": "evt.metadata.report",
-            "val": {"track": dev['status'].get('title', ""), "artist": dev['status']['application']},
+            "val": {"track": dev['status'].get('title', ""),
+                    "artist": dev['status'].get('subtitle', ""),
+                    "album": dev['status'].get('application', ""),
+                    "image": dev["status"].get('image_url', "")},
             "val_t": "str_map"
         }))
 
