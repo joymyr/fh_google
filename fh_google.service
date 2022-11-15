@@ -1,0 +1,11 @@
+ [Unit]
+ Description=Google cast integration for Futurehome
+ After=multi-user.target
+
+ [Service]
+ Type=idle
+ ExecStart=bash -c '/usr/bin/python3 -u /home/pi/fh-google/main.py > /home/pi/fh-google.log 2>&1' &
+ User=pi
+
+ [Install]
+ WantedBy=multi-user.target
