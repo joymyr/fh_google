@@ -39,7 +39,7 @@ def google_init() -> None:
 
 # The callback for when the client receives a CONNECT response from the server.
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code "+str(rc))
+    print("Connected with result code " + str(rc))
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
@@ -50,7 +50,7 @@ def on_connect(client, userdata, flags, rc):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print(msg.topic+" "+str(msg.payload))
+    print(msg.topic + " " + str(msg.payload))
     payload = json.loads(msg.payload)
     val = payload["val"]
     assistant_topic = f"{MQ_SIREN_EVENT_TOPIC}/ad:g1_0"
@@ -58,20 +58,19 @@ def on_message(client, userdata, msg):
     if msg.topic == MQ_MAIN_TOPIC:
         google_to_fh_update_all()
     elif msg.topic == assistant_topic:
-        print(f"Assistant command {val} not implemented yet")
+        requests.post(f"{CAST_URL}assistant/command", json={
+            "message": val
+        })
     else:
         for device in devices:
             siren_topic = f"{MQ_SIREN_COMMAND_TOPIC}/ad:g{device.device_id}_0"
             media_topic = f"{MQ_MEDIA_COMMAND_TOPIC}/ad:g{device.device_id}_1"
             if msg.topic == siren_topic:
                 response = requests.get(f"{CAST_URL}device/{device.device_id}/stop") if val == "off" \
-                    else requests.post(f"{CAST_URL}device/{device.device_id}/playMedia", json=[
-                        {
-                            "mediaTitle": val,
-                            "googleTTS": "no-NO"
-                        }
-                    ]
-                )
+                    else requests.post(f"{CAST_URL}device/{device.device_id}/playMedia", json=[{
+                        "mediaTitle": val,
+                        "googleTTS": "no-NO"
+                    }])
                 print(f"Response {response.status_code} - {response.text}")
             elif msg.topic == media_topic:
                 response = requests.get(f"{CAST_URL}device/{device.device_id}/volume/{val}") if type(val) == int \
@@ -96,7 +95,7 @@ def google_to_fh_update_all() -> None:
         mqclient.publish(event_topic_siren, payload=json.dumps({
             "serv": "siren_ctrl",
             "type": "evt.mode.report",
-            "val": "off" if dev['status']['status'] == "" else "on",
+            "val": "off" if dev['status']['status'] == "" else "playback",
             "val_t": "string"
         }))
         mqclient.publish(event_topic_media, payload=json.dumps({
@@ -190,7 +189,7 @@ def google_to_fh_add_speaker(device):
                     ],
                     "groups": ["ch_0"],
                     "props": {
-                        "sup_modes": ["on", "off", "fire", "CO", "intrusion", "door"],
+                        "sup_modes": ["on", "off", "fire", "CO", "intrusion", "door", "playback"],
                     }
                 },
                 {
