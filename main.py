@@ -14,20 +14,19 @@ updateAll = False
 mqclient = mqtt.Client()
 
 
-def main() -> None:
+async def main() -> None:
     google_init()
     mq_init()
-    update_loop()
+    await update_loop()
 
 
 def mq_init() -> None:
     mqclient.on_connect = on_connect
     mqclient.on_message = on_message
 
+    mqclient.loop_start()
     mqclient.username_pw_set(MQ_USERNAME, MQ_PASSWORD)
     mqclient.connect(MQ_ADDRESS, MQ_PORT, 60)
-
-    mqclient.loop_forever()
 
 
 def google_init() -> None:
@@ -226,4 +225,4 @@ def google_to_fh_add_speaker(device):
     }))
 
 
-main()
+asyncio.run(main())
