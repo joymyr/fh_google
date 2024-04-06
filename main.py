@@ -1,5 +1,7 @@
 import asyncio
 import json
+import time
+
 import requests
 from typing import List
 import paho.mqtt.client as mqtt
@@ -15,6 +17,7 @@ mqclient = mqtt.Client()
 def main() -> None:
     google_init()
     mq_init()
+    update_loop()
 
 
 def mq_init() -> None:
@@ -36,6 +39,11 @@ def google_init() -> None:
         devices.append(Device(dev["id"], dev["name"]))
     devices.sort(key=lambda x: x.device_id)
 
+
+async def update_loop() -> None:
+    while True:
+        google_to_fh_update_all()
+        time.sleep(UPDATE_EVERY_SECONDS)
 
 # The callback for when the client receives a CONNECT response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -86,6 +94,7 @@ def google_to_fh_add_all() -> None:
 
 
 def google_to_fh_update_all() -> None:
+    print("Updating all devices...")
     response = requests.get(f"{CAST_URL}device/")
 
     for dev in response.json():

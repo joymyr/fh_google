@@ -33,9 +33,17 @@ Edit const.py and set the required parameters
 
 ```
 CAST_URL = "Url of your cast api client"
+UPDATE_EVERY_SECONDS = "How often you want the devices to update"
 MQ_ADDRESS = "<Ip address of your Futurehome hub>"
 MQ_USERNAME = "<Futurehome mq username>"
 MQ_PASSWORD = "<Futurehome mq password>"
+
+MQ_MAIN_TOPIC = "Main MQ topic - triggers update of all devices"
+MQ_INCLUSION_TOPIC = "Topic for inclusion reposts"
+MQ_SIREN_EVENT_TOPIC = "Siren event topic"
+MQ_MEDIA_EVENT_TOPIC = "Media event topic"
+MQ_SIREN_COMMAND_TOPIC = "Siren command topic"
+MQ_MEDIA_COMMAND_TOPIC = "Media command topic"
 ```
 
 ## Run

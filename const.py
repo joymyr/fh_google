@@ -1,4 +1,5 @@
 CAST_URL = "http://localhost:3000/"
+UPDATE_EVERY_SECONDS = 30
 
 MQ_ADDRESS = "<Ip address of your Futurehome hub>"
 MQ_USERNAME = "<Futurehome mq username>"
