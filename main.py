@@ -129,7 +129,7 @@ def google_to_fh_update_all() -> None:
                 "val_t": "str_map"
             }))
     except Exception as err:
-        print(f"Failed to update devices {err=}, {type(err)=}")
+        print(f"Failed to update devices {err}, {type(err)}")
 
 
 def google_to_fh_add_assistant():
