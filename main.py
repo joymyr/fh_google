@@ -94,39 +94,42 @@ def google_to_fh_add_all() -> None:
 
 def google_to_fh_update_all() -> None:
     print("Updating all devices...")
-    response = requests.get(f"{CAST_URL}device/")
+    try:
+        response = requests.get(f"{CAST_URL}device/")
 
-    for dev in response.json():
-        event_topic_siren = f"pt:j1/mt:evt{MQ_SIREN_EVENT_TOPIC}/ad:g{dev['id']}_0"
-        event_topic_media = f"pt:j1/mt:evt{MQ_MEDIA_EVENT_TOPIC}/ad:g{dev['id']}_1"
-        print(f"update {dev['name']} ({dev['id']})")
-        mqclient.publish(event_topic_siren, payload=json.dumps({
-            "serv": "siren_ctrl",
-            "type": "evt.mode.report",
-            "val": "off" if dev['status']['status'] == "" else "playback",
-            "val_t": "string"
-        }))
-        mqclient.publish(event_topic_media, payload=json.dumps({
-            "serv": "media_player",
-            "type": "evt.volume.report",
-            "val": int(dev['status']['volume']),
-            "val_t": "int"
-        }))
-        mqclient.publish(event_topic_media, payload=json.dumps({
-            "serv": "media_player",
-            "type": "evt.playback.report",
-            "val": "play" if dev['status']['status'] == "PLAYING" else "pause",
-            "val_t": "string"
-        }))
-        mqclient.publish(event_topic_media, payload=json.dumps({
-            "serv": "media_player",
-            "type": "evt.metadata.report",
-            "val": {"track": dev['status'].get('title', ""),
-                    "artist": dev['status'].get('subtitle', ""),
-                    "album": dev['status'].get('application', ""),
-                    "image": dev["status"].get('image_url', "")},
-            "val_t": "str_map"
-        }))
+        for dev in response.json():
+            event_topic_siren = f"pt:j1/mt:evt{MQ_SIREN_EVENT_TOPIC}/ad:g{dev['id']}_0"
+            event_topic_media = f"pt:j1/mt:evt{MQ_MEDIA_EVENT_TOPIC}/ad:g{dev['id']}_1"
+            print(f"update {dev['name']} ({dev['id']})")
+            mqclient.publish(event_topic_siren, payload=json.dumps({
+                "serv": "siren_ctrl",
+                "type": "evt.mode.report",
+                "val": "off" if dev['status']['status'] == "" else "playback",
+                "val_t": "string"
+            }))
+            mqclient.publish(event_topic_media, payload=json.dumps({
+                "serv": "media_player",
+                "type": "evt.volume.report",
+                "val": int(dev['status']['volume']),
+                "val_t": "int"
+            }))
+            mqclient.publish(event_topic_media, payload=json.dumps({
+                "serv": "media_player",
+                "type": "evt.playback.report",
+                "val": "play" if dev['status']['status'] == "PLAYING" else "pause",
+                "val_t": "string"
+            }))
+            mqclient.publish(event_topic_media, payload=json.dumps({
+                "serv": "media_player",
+                "type": "evt.metadata.report",
+                "val": {"track": dev['status'].get('title', ""),
+                        "artist": dev['status'].get('subtitle', ""),
+                        "album": dev['status'].get('application', ""),
+                        "image": dev["status"].get('image_url', "")},
+                "val_t": "str_map"
+            }))
+    except Exception as err:
+        print(f"Failed to update devices {err=}, {type(err)=}")
 
 
 def google_to_fh_add_assistant():
