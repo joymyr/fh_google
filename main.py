@@ -57,32 +57,35 @@ def on_connect(client, userdata, flags, rc):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print(msg.topic + " " + str(msg.payload))
-    payload = json.loads(msg.payload)
-    val = payload["val"]
-    assistant_topic = f"{MQ_SIREN_EVENT_TOPIC}/ad:g1_0"
+    print(f"Handling message - Topic: {msg.topic}, Payload: {str(msg.payload)}")
+    try:
+        payload = json.loads(msg.payload)
+        val = payload["val"]
+        assistant_topic = f"{MQ_SIREN_EVENT_TOPIC}/ad:g1_0"
 
-    if msg.topic == MQ_MAIN_TOPIC:
-        google_to_fh_update_all()
-    elif msg.topic == assistant_topic:
-        requests.post(f"{CAST_URL}assistant/command", json={
-            "message": val
-        })
-    else:
-        for device in devices:
-            siren_topic = f"{MQ_SIREN_COMMAND_TOPIC}/ad:g{device.device_id}_0"
-            media_topic = f"{MQ_MEDIA_COMMAND_TOPIC}/ad:g{device.device_id}_1"
-            if msg.topic == siren_topic:
-                response = requests.get(f"{CAST_URL}device/{device.device_id}/stop") if val == "off" \
-                    else requests.post(f"{CAST_URL}device/{device.device_id}/playMedia", json=[{
-                        "mediaTitle": val,
-                        "googleTTS": "no-NO"
-                    }])
-                print(f"Response {response.status_code} - {response.text}")
-            elif msg.topic == media_topic:
-                response = requests.get(f"{CAST_URL}device/{device.device_id}/volume/{val}") if type(val) == int \
-                    else requests.get(f"{CAST_URL}device/{device.device_id}/{val}")
-                print(f"Response {response.status_code} - {response.text}")
+        if msg.topic == MQ_MAIN_TOPIC:
+            google_to_fh_update_all()
+        elif msg.topic == assistant_topic:
+            requests.post(f"{CAST_URL}assistant/command", json={
+                "message": val
+            })
+        else:
+            for device in devices:
+                siren_topic = f"{MQ_SIREN_COMMAND_TOPIC}/ad:g{device.device_id}_0"
+                media_topic = f"{MQ_MEDIA_COMMAND_TOPIC}/ad:g{device.device_id}_1"
+                if msg.topic == siren_topic:
+                    response = requests.get(f"{CAST_URL}device/{device.device_id}/stop") if val == "off" \
+                        else requests.post(f"{CAST_URL}device/{device.device_id}/playMedia", json=[{
+                            "mediaTitle": val,
+                            "googleTTS": "no-NO"
+                        }])
+                    print(f"Response {response.status_code} - {response.text}")
+                elif msg.topic == media_topic:
+                    response = requests.get(f"{CAST_URL}device/{device.device_id}/volume/{val}") if type(val) == int \
+                        else requests.get(f"{CAST_URL}device/{device.device_id}/{val}")
+                    print(f"Response {response.status_code} - {response.text}")
+    except Exception as err:
+        print(f"Failed to handle message {err}, {type(err)} - Topic: {msg.topic}, Payload: {str(msg.payload)}")
 
 
 def google_to_fh_add_all() -> None:
