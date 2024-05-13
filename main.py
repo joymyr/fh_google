@@ -107,7 +107,7 @@ def google_to_fh_update_all() -> None:
             mqclient.publish(event_topic_siren, payload=json.dumps({
                 "serv": "siren_ctrl",
                 "type": "evt.mode.report",
-                "val": "off" if dev['status']['status'] == "" else "playback",
+                "val": "off" if dev['status']['status'] == "" and dev['status']['title'] == "" and dev['status']['application'] == "" else "playback",
                 "val_t": "string"
             }))
             mqclient.publish(event_topic_media, payload=json.dumps({
@@ -119,7 +119,7 @@ def google_to_fh_update_all() -> None:
             mqclient.publish(event_topic_media, payload=json.dumps({
                 "serv": "media_player",
                 "type": "evt.playback.report",
-                "val": "play" if dev['status']['status'] == "PLAYING" else "pause",
+                "val": "play" if dev['status']['status'] == "PLAYING" or dev['status']['title'] != "" else "pause" if dev['status']['application'] != "" else "stop",
                 "val_t": "string"
             }))
             mqclient.publish(event_topic_media, payload=json.dumps({
