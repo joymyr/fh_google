@@ -68,22 +68,22 @@ def on_message(client, userdata, msg):
         elif msg.topic == assistant_topic:
             response = requests.post(f"{CAST_URL}assistant/command", json={
                 "message": val
-            })
+            }, timeout=3)
             print(f"Response {response.status_code} - {response.text}")
         else:
             for device in devices:
                 siren_topic = f"{MQ_SIREN_COMMAND_TOPIC}/ad:g{device.device_id}_0"
                 media_topic = f"{MQ_MEDIA_COMMAND_TOPIC}/ad:g{device.device_id}_1"
                 if msg.topic == siren_topic:
-                    response = requests.get(f"{CAST_URL}device/{device.device_id}/stop") if val == "off" \
+                    response = requests.get(f"{CAST_URL}device/{device.device_id}/stop", timeout=3) if val == "off" \
                         else requests.post(f"{CAST_URL}device/{device.device_id}/playMedia", json=[{
                             "mediaTitle": val,
                             "googleTTS": "no-NO"
-                        }])
+                        }], timeout=3)
                     print(f"Response {response.status_code} - {response.text}")
                 elif msg.topic == media_topic:
-                    response = requests.get(f"{CAST_URL}device/{device.device_id}/volume/{val}") if type(val) == int \
-                        else requests.get(f"{CAST_URL}device/{device.device_id}/{val}")
+                    response = requests.get(f"{CAST_URL}device/{device.device_id}/volume/{val}", timeout=3) if type(val) == int \
+                        else requests.get(f"{CAST_URL}device/{device.device_id}/{val}", timeout=3)
                     print(f"Response {response.status_code} - {response.text}")
     except Exception as err:
         print(f"Failed to handle message {err}, {type(err)} - Topic: {msg.topic}, Payload: {str(msg.payload)}")
