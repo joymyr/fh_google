@@ -61,7 +61,7 @@ def on_message(client, userdata, msg):
     try:
         payload = json.loads(msg.payload)
         val = payload["val"]
-        assistant_topic = f"{MQ_SIREN_EVENT_TOPIC}/ad:g1_0"
+        assistant_topic = f"{MQ_SIREN_COMMAND_TOPIC}/ad:g1_0"
 
         if msg.topic == MQ_MAIN_TOPIC:
             google_to_fh_update_all()
@@ -119,7 +119,7 @@ def google_to_fh_update_all() -> None:
             mqclient.publish(event_topic_media, payload=json.dumps({
                 "serv": "media_player",
                 "type": "evt.playback.report",
-                "val": "play" if dev['status']['status'] == "PLAYING" or dev['status']['title'] != "" else "pause" if dev['status']['application'] != "" else "stop",
+                "val": "play" if dev['status']['status'] == "PLAYING" else "pause" if dev['status']['application'] != "" or dev['status']['title'] != "" else "stop",
                 "val_t": "string"
             }))
             mqclient.publish(event_topic_media, payload=json.dumps({
