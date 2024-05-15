@@ -66,9 +66,10 @@ def on_message(client, userdata, msg):
         if msg.topic == MQ_MAIN_TOPIC:
             google_to_fh_update_all()
         elif msg.topic == assistant_topic:
-            requests.post(f"{CAST_URL}assistant/command", json={
+            response = requests.post(f"{CAST_URL}assistant/command", json={
                 "message": val
             })
+            print(f"Response {response.status_code} - {response.text}")
         else:
             for device in devices:
                 siren_topic = f"{MQ_SIREN_COMMAND_TOPIC}/ad:g{device.device_id}_0"
