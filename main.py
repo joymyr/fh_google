@@ -35,7 +35,7 @@ def google_init() -> None:
     global devices
     for dev in response.json():
         print(f"add {dev['name']} ({dev['id']})")
-        devices.append(Device(dev["id"], dev["name"]))
+        devices.append(Device(dev))
     devices.sort(key=lambda x: x.device_id)
 
 
@@ -95,43 +95,62 @@ def google_to_fh_add_all() -> None:
         print(f"{device.device_name} ({device.device_id})")
         google_to_fh_add_speaker(device)
 
+def get_device_by_id(device_id):
+  for device in devices:
+    if device.device_id == device_id:
+      return device
+  return None
 
 def google_to_fh_update_all() -> None:
     print("Updating all devices...")
     try:
         response = requests.get(f"{CAST_URL}device/")
+        updated_devices = []
 
         for dev in response.json():
-            event_topic_siren = f"pt:j1/mt:evt{MQ_SIREN_EVENT_TOPIC}/ad:g{dev['id']}_0"
-            event_topic_media = f"pt:j1/mt:evt{MQ_MEDIA_EVENT_TOPIC}/ad:g{dev['id']}_1"
-            print(f"update {dev['name']} ({dev['id']})")
-            mqclient.publish(event_topic_siren, payload=json.dumps({
-                "serv": "siren_ctrl",
-                "type": "evt.mode.report",
-                "val": "off" if dev['status']['status'] == "" and dev['status']['title'] == "" and dev['status']['application'] == "" else "playback",
-                "val_t": "string"
-            }))
-            mqclient.publish(event_topic_media, payload=json.dumps({
-                "serv": "media_player",
-                "type": "evt.volume.report",
-                "val": int(dev['status']['volume']),
-                "val_t": "int"
-            }))
-            mqclient.publish(event_topic_media, payload=json.dumps({
-                "serv": "media_player",
-                "type": "evt.playback.report",
-                "val": "play" if dev['status']['status'] == "PLAYING" else "pause" if dev['status']['application'] != "" or dev['status']['title'] != "" else "stop",
-                "val_t": "string"
-            }))
-            mqclient.publish(event_topic_media, payload=json.dumps({
-                "serv": "media_player",
-                "type": "evt.metadata.report",
-                "val": {"track": dev['status'].get('title', ""),
-                        "artist": dev['status'].get('subtitle', ""),
-                        "album": dev['status'].get('application', ""),
-                        "image": dev["status"].get('image_url', "")},
-                "val_t": "str_map"
-            }))
+            device = Device(dev)
+            updated_devices.append(device)
+            prev_device = get_device_by_id(device.device_id)
+
+            if prev_device is not None and device.compare(prev_device):
+                print(f"Skipping unchanged device {device.device_name} ({device.device_id})")
+            else:
+                if prev_device is None:
+                    print(f"Adding unknown device {device.device_name} ({device.device_id})")
+                    google_to_fh_add_speaker(device)
+                event_topic_siren = f"pt:j1/mt:evt{MQ_SIREN_EVENT_TOPIC}/ad:g{device.device_id}_0"
+                event_topic_media = f"pt:j1/mt:evt{MQ_MEDIA_EVENT_TOPIC}/ad:g{device.device_id}_1"
+                print(f"Updating {device.device_name} ({device.device_id})")
+                mqclient.publish(event_topic_siren, payload=json.dumps({
+                    "serv": "siren_ctrl",
+                    "type": "evt.mode.report",
+                    "val": device.siren_status,
+                    "val_t": "string"
+                }))
+                mqclient.publish(event_topic_media, payload=json.dumps({
+                    "serv": "media_player",
+                    "type": "evt.volume.report",
+                    "val": device.volume,
+                    "val_t": "int"
+                }))
+                mqclient.publish(event_topic_media, payload=json.dumps({
+                    "serv": "media_player",
+                    "type": "evt.playback.report",
+                    "val": device.playback_status,
+                    "val_t": "string"
+                }))
+                mqclient.publish(event_topic_media, payload=json.dumps({
+                    "serv": "media_player",
+                    "type": "evt.metadata.report",
+                    "val": {"track": device.meta_track,
+                            "artist": device.meta_artist,
+                            "album": device.meta_album,
+                            "image": device.meta_image},
+                    "val_t": "str_map"
+                }))
+        global devices
+        devices = updated_devices
+        devices.sort(key=lambda x: x.device_id)
     except Exception as err:
         print(f"Failed to update devices {err}, {type(err)}")
 
