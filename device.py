@@ -13,14 +13,14 @@ class Device:
         self.device_id = data["id"]
         self.device_name = data["name"]
         self.volume = data["status"]["volume"]
-        self.siren_status = "off" if data['status']['status'] == "" and data['status']['title'] == "" and data['status']['application'] == "" else "off"
+        self.siren_status = "off" if data['status']['status'] == "" and data['status']['title'] == "" and data['status']['application'] == "" else "on"
         self.playback_status = "play" if data['status']['status'] == "PLAYING" else "pause" if data['status']['application'] != "" or data['status']['title'] != "" else "stop"
         self.meta_track = data['status'].get('title', "")
         self.meta_artist = data['status'].get('subtitle', "")
         self.meta_album = data['status'].get('application', "")
         self.meta_image = data["status"].get('image_url', "")
 
-    def compare(self, other):
+    def __eq__(self, other):
         # Compare all attributes
         return (isinstance(other, Device) and
                 self.device_id == other.device_id and

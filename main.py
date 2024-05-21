@@ -112,12 +112,12 @@ def google_to_fh_update_all() -> None:
             updated_devices.append(device)
             prev_device = get_device_by_id(device.device_id)
 
-            if prev_device is not None and device.compare(prev_device):
+            if prev_device is None:
+                print(f"Adding unknown device {device.device_name} ({device.device_id})")
+                google_to_fh_add_speaker(device)
+            if device == prev_device:
                 print(f"Skipping unchanged device {device.device_name} ({device.device_id})")
             else:
-                if prev_device is None:
-                    print(f"Adding unknown device {device.device_name} ({device.device_id})")
-                    google_to_fh_add_speaker(device)
                 event_topic_siren = f"pt:j1/mt:evt{MQ_SIREN_EVENT_TOPIC}/ad:g{device.device_id}_0"
                 event_topic_media = f"pt:j1/mt:evt{MQ_MEDIA_EVENT_TOPIC}/ad:g{device.device_id}_1"
                 print(f"Updating {device.device_name} ({device.device_id})")
